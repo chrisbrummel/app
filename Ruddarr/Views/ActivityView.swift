@@ -26,11 +26,15 @@ struct ActivityView: View {
                                     QueueListItem(item: item)
                                 }
                                 .buttonStyle(.plain)
+                                #if os(iOS)
+                                    .listRowInsets(settings.richActivityDisplay ? richActivityRowInsets : nil)
+                                    .listRowSeparator(settings.richActivityDisplay ? .hidden : .automatic)
+                                #endif
                             }
                             #if os(macOS)
                                 .padding(.vertical, 4)
                             #else
-                                .listRowBackground(Color.card)
+                                .listRowBackground(settings.richActivityDisplay ? Color.clear : Color.card)
                             #endif
                         } header: {
                             if !items.isEmpty { sectionHeader }
@@ -105,6 +109,10 @@ struct ActivityView: View {
         }
     }
 
+    var richActivityRowInsets: EdgeInsets {
+        EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0)
+    }
+
     func updateSelectedItem() {
         guard let taskId = selectedItem?.id else { return }
         guard let instanceId = selectedItem?.instanceId else { return }
@@ -129,7 +137,9 @@ struct ActivityView: View {
 
         var items: [QueueItem] = grouped
             .flatMap { $0.value }
-            .sorted(by: sort.option.isOrderedBefore)
+            .sorted {
+                sort.option.isOrderedBefore($0, $1, isAscending: sort.isAscending)
+            }
 
         if sort.instance != .all {
             items = items.filter {
@@ -147,10 +157,6 @@ struct ActivityView: View {
 
         if sort.issues {
             items = items.filter { $0.trackedDownloadStatus != .ok || $0.status == "warning" }
-        }
-
-        if !sort.isAscending {
-            items = items.reversed()
         }
 
         withAnimation {

@@ -1,7 +1,12 @@
 import SwiftUI
 
+private enum CalendarScrollTarget: Hashable {
+    case dayHeader(TimeInterval)
+}
+
 struct CalendarView: View {
     @State var calendar = MediaCalendar()
+    @State var queue = Queue.shared
 
     @State private var scrollView: ScrollViewProxy?
     @State private var initializationError: API.Error?
@@ -19,57 +24,19 @@ struct CalendarView: View {
     @EnvironmentObject var settings: AppSettings
 
     private let firstWeekday = Calendar.current.firstWeekday
-
-    private var gridLayout = [
+    private let gridLayout = [
         GridItem(.fixed(50), alignment: .center),
-        GridItem(.flexible())
+        GridItem(.flexible()),
     ]
 
     var body: some View {
-        // swiftlint:disable:next closure_body_length
         NavigationStack(path: dependencies.$router.calendarPath) {
-            Group {
-                if settings.configuredInstances.isEmpty {
-                    NoInstance()
-                } else {
-                    ScrollViewReader { proxy in
-                        ScrollView {
-                            LazyVGrid(columns: gridLayout, alignment: .leading, spacing: 0) {
-                                ForEach(calendar.dates, id: \.self) { timestamp in
-                                    let date = Date(timeIntervalSince1970: timestamp)
-                                    let weekday = Calendar.current.component(.weekday, from: date)
+            navigationContent
+        }
+    }
 
-                                    if firstWeekday == weekday {
-                                        CalendarWeekRange(date: date)
-                                    }
-
-                                    CalendarDate(date: date).offset(x: -6)
-                                    media(for: timestamp, date: date)
-                                }
-                            }
-
-                            Group {
-                                if calendar.isLoadingFuture {
-                                    ProgressView().tint(.secondary)
-                                } else if !calendar.dates.isEmpty {
-                                    Button("Load More") {
-                                        calendar.loadMoreDates()
-                                    }
-                                    .buttonStyle(.bordered)
-                                    .tint(.buttonTint)
-                                }
-                            }.padding(.bottom, 32)
-                        }
-                        .opacity(hideCalendarView ? 0 : 1)
-                        .onAppear {
-                            scrollView = proxy
-                        }
-                        .onBecomeActive {
-                            await load()
-                        }
-                    }
-                }
-            }
+    var navigationContent: some View {
+        content
             .scenePadding(.horizontal)
             .scrollIndicators(.never)
             .safeNavigationBarTitleDisplayMode(.inline)
@@ -80,6 +47,8 @@ struct CalendarView: View {
                 todayButton
             }
             .onAppear {
+                queue.instances = settings.instances
+
                 if Set(calendar.instances.map(\.id)) != Set(settings.instances.map(\.id)) {
                     calendar.reset()
                     calendar.instances = settings.instances
@@ -87,12 +56,21 @@ struct CalendarView: View {
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: .scrollToToday)) { _ in
-                withAnimation(.smooth) {
-                    scrollTo(calendar.today())
+                scrollToToday()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .calendarMonitoringChanged)) { notification in
+                guard let change = CalendarMonitoringChange(notification) else { return }
+
+                withAnimation(.easeOut(duration: 0.2)) {
+                    calendar.applyMonitoringChange(change)
                 }
             }
             .task {
                 await load()
+            }
+            .task {
+                queue.instances = settings.instances
+                await queue.fetchTasks()
             }
             .alert(
                 isPresented: $alertPresented,
@@ -111,7 +89,105 @@ struct CalendarView: View {
                     contentUnavailable
                 }
             }
+    }
+
+    @ViewBuilder
+    var content: some View {
+        if settings.configuredInstances.isEmpty {
+            NoInstance()
+        } else {
+            scrollableCalendar
         }
+    }
+
+    var scrollableCalendar: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                calendarSections
+                loadMoreButton
+            }
+            .opacity(hideCalendarView ? 0 : 1)
+            .onAppear {
+                scrollView = proxy
+            }
+            .onBecomeActive {
+                await load()
+            }
+        }
+    }
+
+    @ViewBuilder
+    var calendarSections: some View {
+        if settings.richCalendarDisplay {
+            richCalendarSections
+        } else {
+            classicCalendarSections
+        }
+    }
+
+    var richCalendarSections: some View {
+        LazyVStack(alignment: .leading, spacing: 0, pinnedViews: [.sectionHeaders]) {
+            ForEach(calendar.dates, id: \.self) { timestamp in
+                calendarSection(for: timestamp)
+            }
+        }
+    }
+
+    var classicCalendarSections: some View {
+        LazyVGrid(columns: gridLayout, alignment: .leading, spacing: 0) {
+            ForEach(calendar.dates, id: \.self) { timestamp in
+                classicCalendarSection(for: timestamp)
+            }
+        }
+    }
+
+    @ViewBuilder
+    func calendarSection(for timestamp: TimeInterval) -> some View {
+        let date = Date(timeIntervalSince1970: timestamp)
+        let weekday = Calendar.current.component(.weekday, from: date)
+
+        if firstWeekday == weekday {
+            CalendarWeekRange(date: date)
+        }
+
+        Section {
+            media(for: timestamp, date: date)
+        } header: {
+            CalendarDate(date: date)
+                .id(CalendarScrollTarget.dayHeader(timestamp))
+        }
+    }
+
+    @ViewBuilder
+    func classicCalendarSection(for timestamp: TimeInterval) -> some View {
+        let date = Date(timeIntervalSince1970: timestamp)
+        let weekday = Calendar.current.component(.weekday, from: date)
+
+        if firstWeekday == weekday {
+            Spacer()
+            CalendarWeekRange(date: date, style: .classic)
+        }
+
+        CalendarDate(date: date, style: .classic)
+            .offset(x: -6)
+            .id(CalendarScrollTarget.dayHeader(timestamp))
+        media(for: timestamp, date: date)
+    }
+
+    @ViewBuilder
+    var loadMoreButton: some View {
+        Group {
+            if calendar.isLoadingFuture {
+                ProgressView().tint(.secondary)
+            } else if !calendar.dates.isEmpty {
+                Button("Load More") {
+                    calendar.loadMoreDates()
+                }
+                .buttonStyle(.bordered)
+                .tint(.buttonTint)
+            }
+        }
+        .padding(.bottom, 32)
     }
 
     var notConnectedToInternet: Bool {
@@ -229,40 +305,54 @@ struct CalendarView: View {
 
         try? await Task.sleep(for: .milliseconds(15))
         scrollTo(calendar.today())
+
         try? await Task.sleep(for: .milliseconds(15))
         hideCalendarView = false
     }
 
     func scrollTo(_ timestamp: TimeInterval) {
-        scrollView?.scrollTo(timestamp, anchor: .center)
+        scrollView?.scrollTo(CalendarScrollTarget.dayHeader(timestamp), anchor: .top)
+    }
+
+    func scrollToToday() {
+        withAnimation(.easeOut(duration: 0.45)) {
+            scrollTo(calendar.today())
+        }
     }
 
     func media(for timestamp: TimeInterval, date: Date) -> some View {
         VStack(spacing: 8) {
             if displayMovies, let movies = filteredMovies[timestamp] {
                 ForEach(movies) { movie in
-                    CalendarMovie(date: date, movie: movie)
+                    CalendarMovie(
+                        date: date,
+                        movie: movie,
+                        downloadProgress: downloadProgress(for: movie)
+                    )
                 }
             }
 
             if displaySeries, let episodes = filteredEpisodes[timestamp] {
                 ForEach(episodes) { episode in
-                    CalendarEpisode(episode: episode)
+                    CalendarEpisode(
+                        episode: episode,
+                        downloadProgress: downloadProgress(for: episode)
+                    )
                 }
             }
 
             Spacer()
         }
-        .padding(.top, 4)
+        .frame(maxWidth: .infinity)
+        .padding(.top, settings.richCalendarDisplay ? 0 : 4)
+        .padding(.bottom, 8)
     }
 
     var todayButton: some ToolbarContent {
         ToolbarItem(placement: .primaryAction) {
             Button("Today", systemImage: "calendar.day.timeline.left") {
                 Task { @MainActor in
-                    withAnimation(.smooth) {
-                        self.scrollTo(self.calendar.today())
-                    }
+                    self.scrollToToday()
                 }
             }
             .tint(.primary)
@@ -368,6 +458,44 @@ struct CalendarView: View {
 
             Label(label, systemImage: "internaldrive")
         }
+    }
+}
+
+extension CalendarView {
+    var activeQueueItems: [QueueItem] {
+        queue.items
+            .flatMap { $0.value }
+            .filter(\.hasDownloadProgress)
+    }
+
+    func activeDownload(for movie: Movie) -> QueueItem? {
+        activeQueueItems.first {
+            $0.instanceId == movie.instanceId &&
+                $0.movieId == movie.id
+        }
+    }
+
+    func downloadProgress(for movie: Movie) -> Float? {
+        activeDownload(for: movie)?.progressFraction
+    }
+
+    func activeDownload(for episode: Episode) -> QueueItem? {
+        activeQueueItems.first {
+            guard $0.instanceId == episode.instanceId else {
+                return false
+            }
+
+            if $0.episodeId == episode.id {
+                return true
+            }
+
+            return $0.seriesId == episode.seriesId &&
+                $0.seasonNumber == episode.seasonNumber
+        }
+    }
+
+    func downloadProgress(for episode: Episode) -> Float? {
+        activeDownload(for: episode)?.progressFraction
     }
 }
 

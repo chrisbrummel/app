@@ -23,6 +23,8 @@ extension ActivityView {
         switch sort.option {
         case .byAdded:
             sort.isAscending = false
+        case .byProgress:
+            break
         default:
             sort.isAscending = true
         }

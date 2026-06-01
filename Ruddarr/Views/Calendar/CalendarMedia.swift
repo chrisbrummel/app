@@ -3,10 +3,57 @@ import SwiftUI
 struct CalendarMovie: View {
     var date: Date
     var movie: Movie
+    var downloadProgress: Float?
 
     @EnvironmentObject var settings: AppSettings
 
     var body: some View {
+        Group {
+            if settings.richCalendarDisplay {
+                richContent
+            } else {
+                classicContent
+            }
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, settings.richCalendarDisplay ? 8 : 12)
+        .frame(maxWidth: .infinity)
+        .opacity(shouldFade ? 0.5 : 1)
+        .background(.card.opacity(shouldFade ? 0.6 : 1))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .onTapGesture {
+            dependencies.router.presentMovie(movie)
+        }
+    }
+
+    var richContent: some View {
+        HStack(alignment: .center, spacing: 10) {
+            CalendarPoster(url: movie.remotePoster, title: movie.title)
+
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(alignment: .center) {
+                    Text(movie.title)
+                        .font(.body)
+                        .lineLimit(1)
+                        .foregroundStyle(shouldFade ? .secondary : .primary)
+
+                    Spacer()
+
+                    status
+                }
+
+                if let type = movie.releaseType(for: date) {
+                    Text(type)
+                        .font(.caption)
+                        .foregroundStyle(settings.theme.tint)
+                }
+            }
+
+            Spacer(minLength: 0)
+        }
+    }
+
+    var classicContent: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(alignment: .center) {
@@ -17,7 +64,7 @@ struct CalendarMovie: View {
 
                     Spacer()
 
-                    statusIcon
+                    status
                         .font(.subheadline)
                         .imageScale(.small)
                         .foregroundStyle(.secondary)
@@ -30,25 +77,22 @@ struct CalendarMovie: View {
                 }
             }
         }
-            .padding(.vertical, 8)
-            .padding(.horizontal, 12)
-            .frame(maxWidth: .infinity)
-            .opacity(shouldFade ? 0.5 : 1)
-            .background(.card.opacity(shouldFade ? 0.6 : 1))
-            .clipShape(RoundedRectangle(cornerRadius: 14))
-            .onTapGesture {
-                let deeplink = String(
-                    format: "ruddarr://movies/open/%d?instance=%@",
-                    movie.id,
-                    movie.instanceId!.uuidString
-                )
-
-                try? QuickActions.Deeplink(url: URL(string: deeplink)!)()
-            }
     }
 
     var shouldFade: Bool {
         !movie.monitored && !movie.isDownloaded
+    }
+
+    @ViewBuilder
+    var status: some View {
+        if let downloadProgress {
+            CalendarDownloadProgress(progress: downloadProgress)
+        } else {
+            statusIcon
+                .font(.subheadline)
+                .imageScale(.small)
+                .foregroundStyle(.secondary)
+        }
     }
 
     @ViewBuilder
@@ -67,10 +111,72 @@ struct CalendarMovie: View {
 
 struct CalendarEpisode: View {
     var episode: Episode
+    var downloadProgress: Float?
 
     @EnvironmentObject var settings: AppSettings
 
     var body: some View {
+        Group {
+            if settings.richCalendarDisplay {
+                richContent
+            } else {
+                classicContent
+            }
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, settings.richCalendarDisplay ? 8 : 12)
+        .frame(maxWidth: .infinity)
+        .opacity(shouldFade ? 0.5 : 1)
+        .background(.card.opacity(shouldFade ? 0.6 : 1))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .onTapGesture {
+            dependencies.router.presentEpisode(episode, grouped: isGrouped)
+        }
+    }
+
+    var richContent: some View {
+        HStack(alignment: .center, spacing: 10) {
+            CalendarPoster(url: episode.series?.remotePoster, title: episode.series?.title)
+
+            VStack(alignment: .leading, spacing: 3) {
+                HStack {
+                    Text(episode.series?.title ?? "Unknown")
+                        .font(.body)
+                        .lineLimit(1)
+                        .foregroundStyle(shouldFade ? .secondary : .primary)
+
+                    Spacer()
+
+                    if let airDate = episode.airDateUtc {
+                        Text(airDate.formatted(date: .omitted, time: .shortened))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                HStack(alignment: .center, spacing: 6) {
+                    Text(episode.episodeLabel)
+
+                    if let title = episode.title {
+                        Bullet()
+                        Text(title).lineLimit(1)
+                    }
+
+                    Spacer()
+
+                    status
+                }
+                .foregroundStyle(.secondary)
+                .font(.subheadline)
+
+                tag
+            }
+
+            Spacer(minLength: 0)
+        }
+    }
+
+    var classicContent: some View {
         VStack(alignment: .leading) {
             HStack {
                 Text(episode.series?.title ?? "Unknown")
@@ -97,7 +203,7 @@ struct CalendarEpisode: View {
 
                 Spacer()
 
-                statusIcon
+                status
                     .foregroundStyle(.secondary)
                     .imageScale(.small)
             }
@@ -105,26 +211,6 @@ struct CalendarEpisode: View {
             .font(.subheadline)
 
             tag
-        }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 12)
-        .frame(maxWidth: .infinity)
-        .opacity(shouldFade ? 0.5 : 1)
-        .background(.card.opacity(shouldFade ? 0.6 : 1))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .onTapGesture {
-            var deeplink = String(
-                format: "ruddarr://series/open/%d?season=%d&instance=%@",
-                episode.seriesId,
-                episode.seasonNumber,
-                episode.instanceId!.uuidString
-            )
-
-            if !isGrouped {
-                deeplink.append("&episode=\(episode.episodeNumber)")
-            }
-
-            try? QuickActions.Deeplink(url: URL(string: deeplink)!)()
         }
     }
 
@@ -155,6 +241,17 @@ struct CalendarEpisode: View {
     }
 
     @ViewBuilder
+    var status: some View {
+        if let downloadProgress {
+            CalendarDownloadProgress(progress: downloadProgress)
+        } else {
+            statusIcon
+                .foregroundStyle(.secondary)
+                .imageScale(.small)
+        }
+    }
+
+    @ViewBuilder
     var statusIcon: some View {
         if episode.isDownloaded {
             Image(systemName: "checkmark").symbolVariant(.circle.fill)
@@ -169,6 +266,40 @@ struct CalendarEpisode: View {
 
     var isGrouped: Bool {
         (episode.calendarGroupCount ?? 0) > 2
+    }
+}
+
+private struct CalendarDownloadProgress: View {
+    var progress: Float
+
+    @EnvironmentObject var settings: AppSettings
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(.secondary.opacity(0.28), lineWidth: 2)
+
+            Circle()
+                .trim(from: 0, to: CGFloat(progress))
+                .stroke(settings.theme.tint, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+        }
+        .frame(width: 18, height: 18)
+        .accessibilityLabel("Downloading")
+        .accessibilityValue(progress.formatted(.percent.precision(.fractionLength(0))))
+    }
+}
+
+private struct CalendarPoster: View {
+    var url: String?
+    var title: String?
+
+    var body: some View {
+        CachedAsyncImage(.poster, url, placeholder: title)
+            .aspectRatio(CGSize(width: 150, height: 225), contentMode: .fill)
+            .frame(width: 44, height: 66)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .contentShape(RoundedRectangle(cornerRadius: 8))
     }
 }
 

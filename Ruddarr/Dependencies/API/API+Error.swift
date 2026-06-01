@@ -72,37 +72,44 @@ extension API.Error: LocalizedError {
     var recoverySuggestion: String? {
         let fallback = String(localized: "Try again later.")
 
-        return switch self {
+        switch self {
         case .void:
-            fallback
+            return fallback
         case .invalidUrl(let url):
-            String(localized: "Instance URL is not valid: \(url)")
+            return String(localized: "Instance URL is not valid: \(url)")
         case .badStatusCode(code: let code):
-            String(localized: "Server returned \(code) status code.")
+            if code == 401 {
+                return [
+                    String(localized: "Server returned 401 status code. Check the API key for this instance."),
+                    String(localized: "If the URL is behind Basic Authentication or a reverse proxy, add the required Authorization header in Advanced Settings."),
+                ].joined(separator: " ")
+            }
+
+            return String(localized: "Server returned \(code) status code.")
         case .decodingError(let error):
-            String(
+            return String(
                 format: "[%@] %@",
                 error.context.codingPath.map { $0.stringValue }.joined(separator: ", "),
                 error.context.debugDescription
             )
         case .errorResponse(code: let code, message: let message):
-            "[\(code)] \(message)"
+            return "[\(code)] \(message)"
         case .notConnectedToInternet:
-            NoInternet.Description
+            return NoInternet.Description
         case .timeoutOnPrivateIp(let error):
-            "\(error.localizedDescription)\n\n" + String(
+            return "\(error.localizedDescription)\n\n" + String(
                 localized: "Are you attempting to connect to a private IP address from outside its network?"
             )
         case .appError(let error):
-            error.errorDescription ?? fallback
+            return error.errorDescription ?? fallback
         case .localizedError(let error):
-            error.recoverySuggestion ?? error.failureReason ?? fallback
+            return error.recoverySuggestion ?? error.failureReason ?? fallback
         case .urlError(let error):
-            error.localizedDescription
+            return error.localizedDescription
         case .nsError(let error):
-            error.localizedDescription
+            return error.localizedDescription
         case .error(let error):
-            String(format: String(localized: "An unknown error occurred: %@"), "\(error)")
+            return String(format: String(localized: "An unknown error occurred: %@"), "\(error)")
         }
     }
 }

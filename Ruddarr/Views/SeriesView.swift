@@ -87,7 +87,8 @@ struct SeriesView: View {
             .searchable(
                 text: $searchQuery,
                 isPresented: $searchPresented,
-                placement: .drawerOrToolbar
+                placement: .drawerOrToolbar,
+                prompt: "Search your Series library"
             )
             .autocorrectionDisabled(true)
             .onChange(of: settings.sonarrInstanceId, changeInstance)
@@ -159,11 +160,24 @@ struct SeriesView: View {
             items: instance.series.cachedItems,
             style: settings.grid
         ) { series in
-            NavigationLink(value: SeriesPath.series(series.id)) {
-                switch settings.grid {
-                case .posters: SeriesGridPoster(series: series)
-                case .cards: SeriesGridCard(series: series)
+            Group {
+                #if os(iOS)
+                Button {
+                    dependencies.router.presentSeries(series)
+                } label: {
+                    switch settings.grid {
+                    case .posters: SeriesGridPoster(series: series)
+                    case .cards: SeriesGridCard(series: series)
+                    }
                 }
+                #elseif os(macOS)
+                NavigationLink(value: SeriesPath.series(series.id)) {
+                    switch settings.grid {
+                    case .posters: SeriesGridPoster(series: series)
+                    case .cards: SeriesGridCard(series: series)
+                    }
+                }
+                #endif
             }
             .buttonStyle(.plain)
             .id(series.id)
@@ -239,7 +253,7 @@ struct SeriesView: View {
 
             if Occurrence.since(lastMetadataFetch) > cacheInSeconds {
                 if let model = await instance.fetchMetadata() {
-                    settings.saveInstance(model)
+                    settings.saveInstanceMetadata(model)
                     Occurrence.occurred(lastMetadataFetch)
                 }
             }

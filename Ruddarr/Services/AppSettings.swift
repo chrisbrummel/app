@@ -16,6 +16,8 @@ class AppSettings: ObservableObject {
     @AppStorage("theme", store: dependencies.store) var theme: Theme = .factory
     @AppStorage("appearance", store: dependencies.store) var appearance: Appearance = .automatic
     @AppStorage("grid", store: dependencies.store) var grid: GridStyle = .posters
+    @AppStorage("richCalendarDisplay", store: dependencies.store) var richCalendarDisplay: Bool = true
+    @AppStorage("richActivityDisplay", store: dependencies.store) var richActivityDisplay: Bool = true
 
     @AppStorage("tab", store: dependencies.store) var tab: TabItem = .movies
     @AppStorage("releaseFilters", store: dependencies.store) var releaseFilters: ReleaseFilters = .reset
@@ -79,6 +81,20 @@ extension AppSettings {
         Queue.shared.instances = instances
     }
 
+    func saveInstanceMetadata(_ instance: Instance) {
+        if let index = instances.firstIndex(where: { $0.id == instance.id }) {
+            instances[index].name = instance.name
+            instances[index].version = instance.version
+            instances[index].rootFolders = instance.rootFolders
+            instances[index].qualityProfiles = instance.qualityProfiles
+            instances[index].tags = instance.tags
+        } else {
+            instances.append(instance)
+        }
+
+        Queue.shared.instances = instances
+    }
+
     func deleteInstance(_ instance: Instance) {
         var deletedInstance = instance
         deletedInstance.id = UUID()
@@ -105,6 +121,8 @@ extension AppSettings {
             "theme": theme.rawValue,
             "tab": tab.rawValue,
             "appearance": appearance.rawValue,
+            "richCalendarDisplay": richCalendarDisplay,
+            "richActivityDisplay": richActivityDisplay,
         ]
 
         for instance in configuredInstances {

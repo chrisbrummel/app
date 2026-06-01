@@ -14,9 +14,16 @@ struct Ruddarr: App {
 
     init() {
         #if DEBUG
+        if ProcessInfo.processInfo.environment["RUDDARR_MOCK_API"] == "1" {
+            dependencies.api = .mock
+        }
         // dependencies = .mock
         // dependencies.cloudkit = .mock
         // Tips.showAllTipsForTesting()
+        #endif
+
+        #if RUDDARR_DISABLE_CLOUDKIT
+        dependencies.cloudkit = .mock
         #endif
 
         Migrations.run()

@@ -92,6 +92,7 @@
 		BB54D0282E90932400F5CF42 /* AppIconPlex.icon in Resources */ = {isa = PBXBuildFile; fileRef = BB54D01F2E90932400F5CF42 /* AppIconPlex.icon */; };
 		BB54D0292E90932400F5CF42 /* AppIconPodcasts.icon in Resources */ = {isa = PBXBuildFile; fileRef = BB54D0202E90932400F5CF42 /* AppIconPodcasts.icon */; };
 		BB54D02A2E90932400F5CF42 /* AppIconWarp.icon in Resources */ = {isa = PBXBuildFile; fileRef = BB54D0212E90932400F5CF42 /* AppIconWarp.icon */; };
+		BB54D02B2E90932400F5CF42 /* AppIconOriginal.icon in Resources */ = {isa = PBXBuildFile; fileRef = BB54D02C2E90932400F5CF42 /* AppIconOriginal.icon */; };
 		BB581D1A2BA0ED5E0070DFFC /* CalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB581D192BA0ED5E0070DFFC /* CalendarView.swift */; };
 		BB585E892BF55EF400A9AF25 /* EpisodeContextMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB585E882BF55EF400A9AF25 /* EpisodeContextMenu.swift */; };
 		BB63E1F02C17DE1A00BCCA94 /* Intents.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB63E1EF2C17DE1A00BCCA94 /* Intents.swift */; };
@@ -346,6 +347,7 @@
 		BB54D01F2E90932400F5CF42 /* AppIconPlex.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIconPlex.icon; sourceTree = "<group>"; };
 		BB54D0202E90932400F5CF42 /* AppIconPodcasts.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIconPodcasts.icon; sourceTree = "<group>"; };
 		BB54D0212E90932400F5CF42 /* AppIconWarp.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIconWarp.icon; sourceTree = "<group>"; };
+		BB54D02C2E90932400F5CF42 /* AppIconOriginal.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIconOriginal.icon; sourceTree = "<group>"; };
 		BB581D192BA0ED5E0070DFFC /* CalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarView.swift; sourceTree = "<group>"; };
 		BB585E882BF55EF400A9AF25 /* EpisodeContextMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EpisodeContextMenu.swift; sourceTree = "<group>"; };
 		BB63E1EF2C17DE1A00BCCA94 /* Intents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Intents.swift; sourceTree = "<group>"; };
@@ -684,6 +686,7 @@
 			isa = PBXGroup;
 			children = (
 				BB54D01A2E90932400F5CF42 /* AppIcon.icon */,
+				BB54D02C2E90932400F5CF42 /* AppIconOriginal.icon */,
 				BB54D01B2E90932400F5CF42 /* AppIconBarbie.icon */,
 				BB54D01C2E90932400F5CF42 /* AppIconBooks.icon */,
 				BB54D01D2E90932400F5CF42 /* AppIconMono.icon */,
@@ -1168,6 +1171,7 @@
 				BBA06B592F47D4B600A5F9B4 /* popular-movies.json in Resources */,
 				BBD3F2D42BFA520700DE5D8E /* series-episode-history.json in Resources */,
 				BB54D0232E90932400F5CF42 /* AppIcon.icon in Resources */,
+				BB54D02B2E90932400F5CF42 /* AppIconOriginal.icon in Resources */,
 				BB54D0242E90932400F5CF42 /* AppIconBarbie.icon in Resources */,
 				BB54D0252E90932400F5CF42 /* AppIconBooks.icon in Resources */,
 				BB54D0262E90932400F5CF42 /* AppIconMono.icon in Resources */,
@@ -1436,11 +1440,12 @@
 		BB4071352C1CDD32006A3FA5 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = NotificationService/NotificationService.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "$(RUDDARR_NOTIFICATION_CODE_SIGN_ENTITLEMENTS)";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = B8F97J68XU;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
@@ -1456,9 +1461,11 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.8.3;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ruddarr.notifications;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(RUDDARR_BUNDLE_IDENTIFIER).notifications";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
+				RUDDARR_BUNDLE_IDENTIFIER = com.ruddarr;
+				RUDDARR_NOTIFICATION_CODE_SIGN_ENTITLEMENTS = NotificationService/NotificationService.entitlements;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
@@ -1474,10 +1481,11 @@
 		BB4071362C1CDD32006A3FA5 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = NotificationService/NotificationService.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "$(RUDDARR_NOTIFICATION_CODE_SIGN_ENTITLEMENTS)";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = B8F97J68XU;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
@@ -1493,9 +1501,11 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.8.3;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ruddarr.notifications;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(RUDDARR_BUNDLE_IDENTIFIER).notifications";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
+				RUDDARR_BUNDLE_IDENTIFIER = com.ruddarr;
+				RUDDARR_NOTIFICATION_CODE_SIGN_ENTITLEMENTS = NotificationService/NotificationService.entitlements;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
@@ -1641,13 +1651,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
-				CODE_SIGN_ENTITLEMENTS = Ruddarr/Ruddarr.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "$(RUDDARR_CODE_SIGN_ENTITLEMENTS)";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"Ruddarr/Preview Content\"";
+				DEVELOPMENT_TEAM = B8F97J68XU;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
@@ -1673,10 +1684,12 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.8.3;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ruddarr;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(RUDDARR_BUNDLE_IDENTIFIER)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				REGISTER_APP_GROUPS = YES;
+				RUDDARR_BUNDLE_IDENTIFIER = com.ruddarr;
+				RUDDARR_CODE_SIGN_ENTITLEMENTS = Ruddarr/Ruddarr.entitlements;
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SUPPORTS_MACCATALYST = NO;
@@ -1707,12 +1720,13 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
-				CODE_SIGN_ENTITLEMENTS = Ruddarr/Ruddarr.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "$(RUDDARR_CODE_SIGN_ENTITLEMENTS)";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"Ruddarr/Preview Content\"";
+				DEVELOPMENT_TEAM = B8F97J68XU;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
@@ -1738,10 +1752,12 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.8.3;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ruddarr;
+				PRODUCT_BUNDLE_IDENTIFIER = "$(RUDDARR_BUNDLE_IDENTIFIER)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				REGISTER_APP_GROUPS = YES;
+				RUDDARR_BUNDLE_IDENTIFIER = com.ruddarr;
+				RUDDARR_CODE_SIGN_ENTITLEMENTS = Ruddarr/Ruddarr.entitlements;
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SUPPORTS_MACCATALYST = NO;

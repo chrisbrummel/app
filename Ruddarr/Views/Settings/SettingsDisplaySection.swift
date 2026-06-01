@@ -13,6 +13,9 @@ struct SettingsDisplaySection: View {
             #if os(iOS)
                 iconPicker
             #endif
+
+            richCalendarDisplayToggle
+            richActivityDisplayToggle
         } header: {
             Text("Display", comment: "Preferences section title")
         }
@@ -33,6 +36,20 @@ struct SettingsDisplaySection: View {
             Label("Appearance", systemImage: icon)
                 .labelStyle(SettingsIconLabelStyle())
         }.tint(.secondary)
+    }
+
+    var richActivityDisplayToggle: some View {
+        Toggle(isOn: $settings.richActivityDisplay) {
+            Label("Rich display on Activity", systemImage: TabItem.activity.icon)
+                .labelStyle(SettingsIconLabelStyle())
+        }
+    }
+
+    var richCalendarDisplayToggle: some View {
+        Toggle(isOn: $settings.richCalendarDisplay) {
+            Label("Rich display on Calendar", systemImage: TabItem.calendar.icon)
+                .labelStyle(SettingsIconLabelStyle())
+        }
     }
 
     var themePicker: some View {

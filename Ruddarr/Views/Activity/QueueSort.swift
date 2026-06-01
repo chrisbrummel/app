@@ -15,11 +15,13 @@ struct QueueSort: Equatable {
 
         case byTitle
         case byAdded
+        case byProgress
 
         var label: some View {
             switch self {
             case .byTitle: Label("Title", systemImage: "textformat.abc")
             case .byAdded: Label("Added", systemImage: "calendar.badge.plus")
+            case .byProgress: Label("Progress", systemImage: "gauge")
             }
         }
 
@@ -29,6 +31,29 @@ struct QueueSort: Equatable {
                 lhs.titleLabel < rhs.titleLabel
             case .byAdded:
                 lhs.added ?? Date.distantPast < rhs.added ?? Date.distantPast
+            case .byProgress:
+                lhs.progressFraction < rhs.progressFraction
+            }
+        }
+
+        func isOrderedBefore(_ lhs: QueueItem, _ rhs: QueueItem, isAscending: Bool) -> Bool {
+            switch self {
+            case .byProgress:
+                if lhs.hasDownloadProgress != rhs.hasDownloadProgress {
+                    return lhs.hasDownloadProgress
+                }
+
+                if lhs.progressFraction != rhs.progressFraction {
+                    return isAscending ?
+                        lhs.progressFraction < rhs.progressFraction :
+                        lhs.progressFraction > rhs.progressFraction
+                }
+
+                return lhs.titleLabel < rhs.titleLabel
+            default:
+                return isAscending ?
+                    isOrderedBefore(lhs, rhs) :
+                    isOrderedBefore(rhs, lhs)
             }
         }
     }
