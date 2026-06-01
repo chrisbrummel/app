@@ -17,11 +17,16 @@ extension API {
             try await Task.sleep(for: .seconds(1))
 
             return loadPreviewData(filename: "movie-releases")
-        }, getMovie: { movieId, _ in
+        }, getMovie: { movieId, instance in
             let movies: [Movie] = loadPreviewData(filename: "movies")
+            let calendarMovies: [Movie] = modifyCalendarMovies(loadPreviewData(filename: "calendar-movies"), instance)
             try await Task.sleep(for: .seconds(2))
 
-            return movies.first(where: { $0.guid == movieId })!
+            if let movie = (movies + calendarMovies).first(where: { $0.id == movieId }) {
+                return movie
+            }
+
+            throw AppError("Preview movie `\(movieId)` not found.")
         }, getMovieHistory: { _, _ in
             let events: [MediaHistoryEvent] = loadPreviewData(filename: "movie-history")
             try await Task.sleep(for: .seconds(1))
